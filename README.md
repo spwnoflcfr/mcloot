@@ -1,2 +1,11 @@
 # mcloot
 nfc hardware wallet that is readable, writeable, safe and open.
+
+
+The main idea is to create a low data script that can be used and edited easily to load onto any nfc device. cards, stickers, etc... 
+
+my first trial will be to use FREE apps on mobile to load cards with code that acts as a hardware wallet. simply open a wallet app, go to "import wallet" and tap the card. 
+
+we may need to create our own wallet as well... if so that will be included in this repository.
+
+wish me and my homies luck.
