@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+import struct
+import os
+import random
+
+def make_unique_bmp(path, target_size=400, width=10, height=10):
+    # Calculate row padding
+    row_unpadded = 3 * width
+    row_padded = ((row_unpadded + 3) // 4) * 4
+    pixel_array_size = row_padded * height
+
+    file_header_size = 14
+    dib_header_size = 40
+    minimal_size = file_header_size + dib_header_size + pixel_array_size
+
+    if target_size < minimal_size:
+        raise ValueError(f"Target size {target_size} too small for {width}x{height} BMP.")
+
+    filler_size = target_size - minimal_size
+    bfOffBits = file_header_size + dib_header_size + filler_size
+
+    # BMP File Header
+    file_header = b'BM' + struct.pack('<IHHI', target_size, 0, 0, bfOffBits)
+
+    # DIB Header
+    dib_header = struct.pack(
+        '<IIIHHIIIIII',
+        dib_header_size,
+        width,
+        height,
+        1,
+        24,
+        0,
+        pixel_array_size,
+        2835,
+        2835,
+        0,
+        0
+    )
+
+    filler = b'\x00' * filler_size
+
+    # Generate unique pixel data
+    pixel_data = b''
+    pattern_type = random.choice(['checker', 'stripes', 'gradient', 'noise'])
+
+    for y in range(height):
+        row = b''
+        for x in range(width):
+            if pattern_type == 'checker':
+                color = (255, 255, 255) if (x+y)%2==0 else (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            elif pattern_type == 'stripes':
+                color = (255,0,0) if x%2==0 else (0,0,255)
+            elif pattern_type == 'gradient':
+                color = (int(255*x/width), int(255*y/height), random.randint(0,255))
+            else:  # noise
+                color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            # BMP stores in B,G,R
+            row += bytes([color[2], color[1], color[0]])
+        # padding
+        pad_len = row_padded - row_unpadded
+        if pad_len:
+            row += b'\x00' * pad_len
+        pixel_data += row
+
+    # Write BMP
+    with open(path, 'wb') as f:
+        f.write(file_header)
+        f.write(dib_header)
+        f.write(filler)
+        f.write(pixel_data)
+
+# Create 10 unique images
+out_dir = "/mnt/data/bmp10x10_unique"
+os.makedirs(out_dir, exist_ok=True)
+
+file_paths = []
+for i in range(10):
+    filename = f"unique_{i+1}.bmp"
+    path = os.path.join(out_dir, filename)
+    make_unique_bmp(path, 400, 10, 10)
+    file_paths.append(path)
+
+# Zip them
+zip_path = "/mnt/data/bmp10x10_unique_pack.zip"
+import zipfile
+with zipfile.ZipFile(zip_path, "w") as z:
+    for p in file_paths:
+        z.write(p, os.path.basename(p))
+
+zip_path
