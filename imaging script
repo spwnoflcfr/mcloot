@@ -1,133 +1,76 @@
 #!/usr/bin/env python3
-"""
-make_bmp_exact_size.py
-
-Generate a valid 24-bit BMP file whose total file size equals target_size bytes.
-
-Usage:
-    python make_bmp_exact_size.py            # creates 'out_400.bmp' (400 bytes)
-    python make_bmp_exact_size.py 400 out.bmp
-    python make_bmp_exact_size.py 400 out.bmp 1 1   # target=400, width=1, height=1
-"""
-
 import sys
 import struct
+import os
 
-def make_bmp_exact_size(path, target_size=400, width=1, height=1):
-    # 24-bit BMP: each pixel = 3 bytes, rows are padded to 4-byte boundary
+def make_bmp_exact_size(path, target_size=400, width=10, height=10):
+    # 24-bit BMP row math
     row_unpadded = 3 * width
     row_padded = ((row_unpadded + 3) // 4) * 4
     pixel_array_size = row_padded * height
 
-    # minimal valid file size: 14 (file header) + 40 (DIB header) + pixel array
     file_header_size = 14
     dib_header_size = 40
     minimal_size = file_header_size + dib_header_size + pixel_array_size
 
     if target_size < minimal_size:
         raise ValueError(
-            f"Target size {target_size} too small for a {width}x{height} 24-bit BMP. "
+            f"Target size {target_size} too small for {width}x{height}. "
             f"Minimum is {minimal_size} bytes."
         )
 
     filler_size = target_size - minimal_size
-    # bfOffBits: offset to pixel data from file start
     bfOffBits = file_header_size + dib_header_size + filler_size
 
-    # Build BMP file header (14 bytes)
-    # typedef struct {
-    #   WORD  bfType;       // 'BM' -> 0x4D42
-    #   DWORD bfSize;       // size of file in bytes
-    #   WORD  bfReserved1;  // 0
-    #   WORD  bfReserved2;  // 0
-    #   DWORD bfOffBits;    // offset to pixel data
-    # } BITMAPFILEHEADER;
-    bfType = b'BM'
-    bfSize = target_size
-    bfReserved1 = 0
-    bfReserved2 = 0
-
-    file_header = bfType + struct.pack('<IHHI', bfSize, bfReserved1, bfReserved2, bfOffBits)
-
-    # Build DIB header (BITMAPINFOHEADER, 40 bytes)
-    # typedef struct {
-    #   DWORD biSize; 
-    #   LONG  biWidth;
-    #   LONG  biHeight;
-    #   WORD  biPlanes;
-    #   WORD  biBitCount;
-    #   DWORD biCompression;
-    #   DWORD biSizeImage;
-    #   LONG  biXPelsPerMeter;
-    #   LONG  biYPelsPerMeter;
-    #   DWORD biClrUsed;
-    #   DWORD biClrImportant;
-    # } BITMAPINFOHEADER;
-    biSize = dib_header_size
-    biWidth = width
-    biHeight = height            # bottom-up bitmap: positive height
-    biPlanes = 1
-    biBitCount = 24              # 24-bit RGB
-    biCompression = 0            # BI_RGB (no compression)
-    biSizeImage = pixel_array_size
-    biXPelsPerMeter = 2835       # ~72 DPI (optional)
-    biYPelsPerMeter = 2835
-    biClrUsed = 0
-    biClrImportant = 0
-
-    dib_header = struct.pack(
-        '<IIIHHIIIIII',
-        biSize,
-        biWidth,
-        biHeight,
-        biPlanes,
-        biBitCount,
-        biCompression,
-        biSizeImage,
-        biXPelsPerMeter,
-        biYPelsPerMeter,
-        biClrUsed,
-        biClrImportant
+    # BMP File Header
+    file_header = (
+        b"BM" +
+        struct.pack("<IHHI", target_size, 0, 0, bfOffBits)
     )
 
-    # Create filler (zero bytes)
-    filler = b'\x00' * filler_size
+    # DIB header (BITMAPINFOHEADER)
+    dib_header = struct.pack(
+        "<IIIHHIIIIII",
+        dib_header_size,
+        width,
+        height,
+        1,
+        24,
+        0,
+        pixel_array_size,
+        2835,
+        2835,
+        0,
+        0
+    )
 
-    # Create pixel data:
-    # We'll produce a simple pattern: each pixel set to (R,G,B) = (0xAA,0x55,0xFF)
-    # Remember BMP stores pixel triplets in B,G,R order.
-    pixel_row = b''
-    for x in range(width):
-        # Blue, Green, Red
-        pixel_row += bytes([0xFF, 0x55, 0xAA])
-    # pad row to 4-bytes
+    filler = b"\x00" * filler_size
+
+    # Build pixel rows (Blue, Green, Red)
+    pixel_row = b""
+    for _ in range(width):
+        pixel_row += bytes([0x30, 0xD0, 0x50])  # green-ish
     pad_len = row_padded - row_unpadded
-    if pad_len:
-        pixel_row += b'\x00' * pad_len
+    pixel_row += b"\x00" * pad_len
 
     pixel_data = pixel_row * height
 
-    # sanity check sizes
-    assert len(pixel_data) == pixel_array_size
-    assert len(file_header) == file_header_size
-    assert len(dib_header) == dib_header_size
-    assert file_header_size + dib_header_size + len(filler) + len(pixel_data) == target_size
-
-    with open(path, 'wb') as f:
+    with open(path, "wb") as f:
         f.write(file_header)
         f.write(dib_header)
         f.write(filler)
         f.write(pixel_data)
 
-    print(f"Wrote {path} ({target_size} bytes) — {width}x{height}, filler {filler_size} bytes.")
+    print(f"Created {path} ({target_size} bytes)")
 
-if __name__ == '__main__':
-    # CLI: [target_size] [out_path] [width] [height]
-    argv = sys.argv[1:]
-    target = int(argv[0]) if len(argv) >= 1 else 400
-    out = argv[1] if len(argv) >= 2 else f'out_{target}.bmp'
-    w = int(argv[2]) if len(argv) >= 3 else 1
-    h = int(argv[3]) if len(argv) >= 4 else 1
+if __name__ == "__main__":
+    # Run 10 times automatically
+    out_dir = "/mnt/data/bmp10x10_out"
+    os.makedirs(out_dir, exist_ok=True)
 
-    make_bmp_exact_size(out, target, w, h)
+    for i in range(10):
+        filename = f"img10x10_{i+1}.bmp"
+        path = os.path.join(out_dir, filename)
+        make_bmp_exact_size(path, 400, 10, 10)
 
+    print(f"10 images written to {out_dir}")
