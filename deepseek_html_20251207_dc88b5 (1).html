@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alien Space BMP Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: #0a0e17;
+            color: #b3e0ff;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(28, 58, 173, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.1) 0%, transparent 20%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-bottom: 1px solid rgba(64, 156, 255, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #40c9ff, #8145ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(64, 156, 255, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #88c1ff;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .controls {
+            background: rgba(16, 25, 48, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(64, 156, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 15px;
+            color: #6bb5ff;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pattern-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .pattern-btn {
+            padding: 10px 18px;
+            background: rgba(32, 50, 90, 0.7);
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            color: #b3e0ff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .pattern-btn:hover {
+            background: rgba(42, 70, 130, 0.8);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pattern-btn.active {
+            background: linear-gradient(to right, #40c9ff, #8145ff);
+            color: #0a0e17;
+            border-color: #40c9ff;
+            font-weight: 600;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .slider-container label {
+            min-width: 150px;
+            font-weight: 500;
+        }
+        
+        input[type="range"] {
+            flex-grow: 1;
+            height: 8px;
+            border-radius: 5px;
+            background: rgba(32, 50, 90, 0.7);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #40c9ff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(64, 201, 255, 0.8);
+        }
+        
+        .value-display {
+            min-width: 40px;
+            text-align: center;
+            font-weight: 600;
+            color: #40c9ff;
+        }
+        
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .color-picker label {
+            min-width: 150px;
+            font-weight: 500;
+        }
+        
+        .color-inputs {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .color-input {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .color-input input {
+            width: 60px;
+            padding: 5px;
+            background: rgba(32, 50, 90, 0.7);
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            border-radius: 5px;
+            color: #b3e0ff;
+            text-align: center;
+        }
+        
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .batch-controls {
+            background: rgba(32, 50, 90, 0.4);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .batch-controls h4 {
+            margin-bottom: 10px;
+            color: #6bb5ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .batch-inputs {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .batch-input {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .batch-input label {
+            font-size: 0.9rem;
+            color: #88c1ff;
+        }
+        
+        .batch-input input {
+            width: 80px;
+            padding: 8px;
+            background: rgba(16, 25, 48, 0.7);
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            border-radius: 5px;
+            color: #b3e0ff;
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .action-btn {
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .generate-btn {
+            flex-grow: 1;
+            background: linear-gradient(to right, #40c9ff, #8145ff);
+            color: #0a0e17;
+        }
+        
+        .download-single-btn {
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+        }
+        
+        .download-zip-btn {
+            background: linear-gradient(to right, #e74c3c, #c0392b);
+            color: white;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-btn:active {
+            transform: translateY(1px);
+        }
+        
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .canvas-container {
+            background: rgba(16, 25, 48, 0.7);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(64, 156, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        .canvas-container h3 {
+            margin-bottom: 20px;
+            color: #6bb5ff;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            background: #050911;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(16, 25, 48, 0.5);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #88c1ff;
+        }
+        
+        .mini-canvas-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(16, 25, 48, 0.3);
+            border-radius: 8px;
+        }
+        
+        .mini-canvas {
+            width: 60px;
+            height: 45px;
+            border: 1px solid rgba(64, 156, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .mini-canvas:hover {
+            transform: scale(1.1);
+            border-color: #40c9ff;
+        }
+        
+        .mini-canvas.active {
+            border-color: #40c9ff;
+            border-width: 2px;
+            box-shadow: 0 0 10px rgba(64, 201, 255, 0.5);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(64, 156, 255, 0.3);
+            color: #6bb5ff;
+            font-size: 0.9rem;
+        }
+        
+        @media (min-width: 992px) {
+            .main-content {
+                flex-direction: row;
+            }
+            
+            .controls {
+                width: 40%;
+            }
+            
+            .canvas-container {
+                width: 60%;
+            }
+        }
+        
+        .warning {
+            color: #ff9966;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: linear-gradient(to right, #2ecc71, #27ae60);
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-robot"></i> Alien Space BMP Generator</h1>
+            <p class="subtitle">Generate random BMP images with alien and outer space themed patterns. Create single images or batches, then download as individual BMPs or a ZIP archive.</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <h3><i class="fas fa-palette"></i> Pattern Type</h3>
+                    <div class="pattern-buttons">
+                        <button class="pattern-btn active" data-pattern="stars">Stars & Nebulae</button>
+                        <button class="pattern-btn" data-pattern="alien">Alien Code</button>
+                        <button class="pattern-btn" data-pattern="circuit">Circuit Board</button>
+                        <button class="pattern-btn" data-pattern="portal">Space Portal</button>
+                        <button class="pattern-btn" data-pattern="random">Random Chaos</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><i class="fas fa-ruler-combined"></i> Dimensions</h3>
+                    <div class="slider-container">
+                        <label>Width (pixels):</label>
+                        <input type="range" id="width-slider" min="5" max="800" value="400">
+                        <span id="width-value" class="value-display">400</span>
+                    </div>
+                    <div class="slider-container">
+                        <label>Height (pixels):</label>
+                        <input type="range" id="height-slider" min="5" max="600" value="300">
+                        <span id="height-value" class="value-display">300</span>
+                    </div>
+                    <div class="warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Warning: Images smaller than 50px may be difficult to see</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><i class="fas fa-fill-drip"></i> Colors</h3>
+                    <div class="color-picker">
+                        <label>Primary Color:</label>
+                        <div class="color-inputs">
+                            <div class="color-input">
+                                <input type="number" id="r1" min="0" max="255" value="25">
+                                <span>R</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="g1" min="0" max="255" value="10">
+                                <span>G</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="b1" min="0" max="255" value="60">
+                                <span>B</span>
+                            </div>
+                            <div id="color-preview-1" class="color-preview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-picker">
+                        <label>Secondary Color:</label>
+                        <div class="color-inputs">
+                            <div class="color-input">
+                                <input type="number" id="r2" min="0" max="255" value="120">
+                                <span>R</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="g2" min="0" max="255" value="20">
+                                <span>G</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="b2" min="0" max="255" value="140">
+                                <span>B</span>
+                            </div>
+                            <div id="color-preview-2" class="color-preview"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="color-picker">
+                        <label>Accent Color:</label>
+                        <div class="color-inputs">
+                            <div class="color-input">
+                                <input type="number" id="r3" min="0" max="255" value="0">
+                                <span>R</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="g3" min="0" max="255" value="200">
+                                <span>G</span>
+                            </div>
+                            <div class="color-input">
+                                <input type="number" id="b3" min="0" max="255" value="255">
+                                <span>B</span>
+                            </div>
+                            <div id="color-preview-3" class="color-preview"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="batch-controls">
+                    <h4><i class="fas fa-layer-group"></i> Batch Generation</h4>
+                    <div class="batch-inputs">
+                        <div class="batch-input">
+                            <label>Number of Images:</label>
+                            <input type="number" id="batch-count" min="1" max="20" value="3">
+                        </div>
+                        <div class="batch-input">
+                            <label>Size Variation (%):</label>
+                            <input type="number" id="size-variation" min="0" max="100" value="20">
+                        </div>
+                        <div class="batch-input">
+                            <label>Color Variation:</label>
+                            <input type="number" id="color-variation" min="0" max="50" value="10">
+                        </div>
+                    </div>
+                    <div class="warning">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Batch images will have random variations in size and color</span>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="action-btn generate-btn" id="generate-btn">
+                        <i class="fas fa-bolt"></i> Generate Single
+                    </button>
+                    <button class="action-btn generate-btn" id="generate-batch-btn">
+                        <i class="fas fa-layer-group"></i> Generate Batch
+                    </button>
+                    <button class="action-btn download-single-btn" id="download-single-btn">
+                        <i class="fas fa-download"></i> Download BMP
+                    </button>
+                    <button class="action-btn download-zip-btn" id="download-zip-btn">
+                        <i class="fas fa-file-archive"></i> Download ZIP
+                    </button>
+                </div>
+                
+                <div class="batch-preview">
+                    <h4><i class="fas fa-images"></i> Batch Preview</h4>
+                    <div id="mini-canvas-container" class="mini-canvas-container">
+                        <!-- Mini canvases will be added here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <h3><i class="fas fa-eye"></i> Preview</h3>
+                <canvas id="bmp-canvas" width="400" height="300"></canvas>
+                <div class="info">
+                    <p><i class="fas fa-info-circle"></i> This BMP is generated entirely in your browser. You can generate images as small as 5x5 pixels. Use "Generate Batch" to create multiple variations, then download all as a ZIP file.</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Alien Space BMP Generator | Created with JavaScript | Supports BMP sizes from 5px to 800px</p>
+        </footer>
+        
+        <div id="notification" class="notification">
+            <i class="fas fa-check-circle"></i>
+            <span>Download started!</span>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const canvas = document.getElementById('bmp-canvas');
+        const ctx = canvas.getContext('2d');
+        const patternButtons = document.querySelectorAll('.pattern-btn');
+        const widthSlider = document.getElementById('width-slider');
+        const heightSlider = document.getElementById('height-slider');
+        const widthValue = document.getElementById('width-value');
+        const heightValue = document.getElementById('height-value');
+        const colorInputs = document.querySelectorAll('.color-inputs input');
+        const colorPreviews = document.querySelectorAll('.color-preview');
+        const generateBtn = document.getElementById('generate-btn');
+        const generateBatchBtn = document.getElementById('generate-batch-btn');
+        const downloadSingleBtn = document.getElementById('download-single-btn');
+        const downloadZipBtn = document.getElementById('download-zip-btn');
+        const batchCountInput = document.getElementById('batch-count');
+        const sizeVariationInput = document.getElementById('size-variation');
+        const colorVariationInput = document.getElementById('color-variation');
+        const miniCanvasContainer = document.getElementById('mini-canvas-container');
+        const notification = document.getElementById('notification');
+        
+        // Current settings
+        let currentPattern = 'stars';
+        let width = 400;
+        let height = 300;
+        let primaryColor = {r: 25, g: 10, b: 60};
+        let secondaryColor = {r: 120, g: 20, b: 140};
+        let accentColor = {r: 0, g: 200, b: 255};
+        
+        // Store for batch images
+        let batchImages = [];
+        let currentImageIndex = 0;
+        
+        // Initialize
+        updateColorPreviews();
+        generateBMP();
+        createBatchPreview();
+        
+        // Event listeners for pattern selection
+        patternButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                patternButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                currentPattern = button.dataset.pattern;
+                generateBMP();
+            });
+        });
+        
+        // Event listeners for dimension sliders
+        widthSlider.addEventListener('input', () => {
+            width = parseInt(widthSlider.value);
+            widthValue.textContent = width;
+            canvas.width = width;
+            generateBMP();
+        });
+        
+        heightSlider.addEventListener('input', () => {
+            height = parseInt(heightSlider.value);
+            heightValue.textContent = height;
+            canvas.height = height;
+            generateBMP();
+        });
+        
+        // Event listeners for color inputs
+        colorInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                updateColors();
+                updateColorPreviews();
+                generateBMP();
+            });
+        });
+        
+        // Event listener for generate single button
+        generateBtn.addEventListener('click', () => {
+            generateBMP();
+            // Add to batch images
+            addToBatch(canvas);
+            showNotification('Image added to batch!');
+        });
+        
+        // Event listener for generate batch button
+        generateBatchBtn.addEventListener('click', generateBatch);
+        
+        // Event listener for download single button
+        downloadSingleBtn.addEventListener('click', downloadSingleBMP);
+        
+        // Event listener for download ZIP button
+        downloadZipBtn.addEventListener('click', downloadAsZip);
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.querySelector('span').textContent = message;
+            notification.style.display = 'flex';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Update color objects from inputs
+        function updateColors() {
+            primaryColor = {
+                r: parseInt(document.getElementById('r1').value),
+                g: parseInt(document.getElementById('g1').value),
+                b: parseInt(document.getElementById('b1').value)
+            };
+            
+            secondaryColor = {
+                r: parseInt(document.getElementById('r2').value),
+                g: parseInt(document.getElementById('g2').value),
+                b: parseInt(document.getElementById('b2').value)
+            };
+            
+            accentColor = {
+                r: parseInt(document.getElementById('r3').value),
+                g: parseInt(document.getElementById('g3').value),
+                b: parseInt(document.getElementById('b3').value)
+            };
+        }
+        
+        // Update color preview boxes
+        function updateColorPreviews() {
+            updateColors();
+            colorPreviews[0].style.backgroundColor = `rgb(${primaryColor.r}, ${primaryColor.g}, ${primaryColor.b})`;
+            colorPreviews[1].style.backgroundColor = `rgb(${secondaryColor.r}, ${secondaryColor.g}, ${secondaryColor.b})`;
+            colorPreviews[2].style.backgroundColor = `rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b})`;
+        }
+        
+        // Add current image to batch
+        function addToBatch(sourceCanvas) {
+            const miniCanvas = document.createElement('canvas');
+            miniCanvas.width = 60;
+            miniCanvas.height = 45;
+            miniCanvas.className = 'mini-canvas';
+            
+            const miniCtx = miniCanvas.getContext('2d');
+            
+            // Draw scaled down version
+            miniCtx.drawImage(sourceCanvas, 0, 0, 60, 45);
+            
+            // Store the image data
+            const fullCanvas = document.createElement('canvas');
+            fullCanvas.width = sourceCanvas.width;
+            fullCanvas.height = sourceCanvas.height;
+            const fullCtx = fullCanvas.getContext('2d');
+            fullCtx.drawImage(sourceCanvas, 0, 0);
+            
+            const imageData = {
+                canvas: fullCanvas,
+                pattern: currentPattern,
+                width: sourceCanvas.width,
+                height: sourceCanvas.height,
+                colors: {
+                    primary: {...primaryColor},
+                    secondary: {...secondaryColor},
+                    accent: {...accentColor}
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            batchImages.push(imageData);
+            
+            // Add to preview
+            miniCanvasContainer.appendChild(miniCanvas);
+            
+            // Add click event to select image
+            miniCanvas.addEventListener('click', () => {
+                // Remove active class from all mini canvases
+                document.querySelectorAll('.mini-canvas').forEach(c => {
+                    c.classList.remove('active');
+                });
+                
+                // Add active class to clicked canvas
+                miniCanvas.classList.add('active');
+                
+                // Show this image in main canvas
+                const index = Array.from(miniCanvasContainer.children).indexOf(miniCanvas);
+                if (index >= 0 && batchImages[index]) {
+                    displayBatchImage(index);
+                }
+            });
+            
+            // Make the new one active
+            document.querySelectorAll('.mini-canvas').forEach(c => {
+                c.classList.remove('active');
+            });
+            miniCanvas.classList.add('active');
+            currentImageIndex = batchImages.length - 1;
+            
+            // Update download button state
+            downloadZipBtn.disabled = batchImages.length === 0;
+        }
+        
+        // Display a batch image in the main canvas
+        function displayBatchImage(index) {
+            if (index >= 0 && index < batchImages.length) {
+                const image = batchImages[index];
+                currentImageIndex = index;
+                
+                // Update main canvas dimensions
+                canvas.width = image.width;
+                canvas.height = image.height;
+                width = image.width;
+                height = image.height;
+                
+                // Update sliders
+                widthSlider.value = image.width;
+                heightSlider.value = image.height;
+                widthValue.textContent = image.width;
+                heightValue.textContent = image.height;
+                
+                // Draw the image
+                ctx.drawImage(image.canvas, 0, 0);
+                
+                // Update pattern button
+                patternButtons.forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.pattern === image.pattern);
+                });
+                currentPattern = image.pattern;
+                
+                // Update colors
+                primaryColor = {...image.colors.primary};
+                secondaryColor = {...image.colors.secondary};
+                accentColor = {...image.colors.accent};
+                
+                document.getElementById('r1').value = primaryColor.r;
+                document.getElementById('g1').value = primaryColor.g;
+                document.getElementById('b1').value = primaryColor.b;
+                
+                document.getElementById('r2').value = secondaryColor.r;
+                document.getElementById('g2').value = secondaryColor.g;
+                document.getElementById('b2').value = secondaryColor.b;
+                
+                document.getElementById('r3').value = accentColor.r;
+                document.getElementById('g3').value = accentColor.g;
+                document.getElementById('b3').value = accentColor.b;
+                
+                updateColorPreviews();
+            }
+        }
+        
+        // Create initial batch preview
+        function createBatchPreview() {
+            // Clear container
+            miniCanvasContainer.innerHTML = '';
+            batchImages = [];
+            
+            // Generate a few initial images
+            for (let i = 0; i < 3; i++) {
+                // Temporarily change pattern for variety
+                const patterns = ['stars', 'alien', 'circuit', 'portal', 'random'];
+                const tempPattern = patterns[i % patterns.length];
+                
+                // Generate a slightly different image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw with slightly modified colors
+                const colorVar = 30;
+                const modPrimary = {
+                    r: clamp(primaryColor.r + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    g: clamp(primaryColor.g + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    b: clamp(primaryColor.b + (Math.random() * colorVar * 2 - colorVar), 0, 255)
+                };
+                
+                tempCtx.fillStyle = `rgb(${modPrimary.r}, ${modPrimary.g}, ${modPrimary.b})`;
+                tempCtx.fillRect(0, 0, width, height);
+                
+                // Draw pattern (simplified for batch preview)
+                drawPatternOnCanvas(tempCtx, tempCanvas.width, tempCanvas.height, tempPattern, modPrimary, secondaryColor, accentColor);
+                
+                // Add to batch
+                addToBatch(tempCanvas);
+            }
+            
+            // Show first image
+            displayBatchImage(0);
+        }
+        
+        // Generate the BMP pattern
+        function generateBMP() {
+            // Clear canvas
+            ctx.fillStyle = `rgb(${primaryColor.r}, ${primaryColor.g}, ${primaryColor.b})`;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Apply selected pattern
+            drawPatternOnCanvas(ctx, width, height, currentPattern, primaryColor, secondaryColor, accentColor);
+        }
+        
+        // Draw pattern on any canvas
+        function drawPatternOnCanvas(context, w, h, pattern, primColor, secColor, accColor) {
+            switch(pattern) {
+                case 'stars':
+                    drawStars(context, w, h, primColor, secColor, accColor);
+                    break;
+                case 'alien':
+                    drawAlienCode(context, w, h, primColor, secColor, accColor);
+                    break;
+                case 'circuit':
+                    drawCircuitBoard(context, w, h, primColor, secColor, accColor);
+                    break;
+                case 'portal':
+                    drawSpacePortal(context, w, h, primColor, secColor, accColor);
+                    break;
+                case 'random':
+                    drawRandomChaos(context, w, h, primColor, secColor, accColor);
+                    break;
+            }
+        }
+        
+        // Generate a batch of images
+        function generateBatch() {
+            const count = parseInt(batchCountInput.value);
+            const sizeVar = parseInt(sizeVariationInput.value) / 100;
+            const colorVar = parseInt(colorVariationInput.value);
+            
+            // Clear current batch
+            miniCanvasContainer.innerHTML = '';
+            batchImages = [];
+            
+            // Generate batch images
+            for (let i = 0; i < count; i++) {
+                // Create variations
+                const variedWidth = Math.max(5, Math.floor(width * (1 + (Math.random() * sizeVar * 2 - sizeVar))));
+                const variedHeight = Math.max(5, Math.floor(height * (1 + (Math.random() * sizeVar * 2 - sizeVar))));
+                
+                // Create color variations
+                const variedPrimary = {
+                    r: clamp(primaryColor.r + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    g: clamp(primaryColor.g + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    b: clamp(primaryColor.b + (Math.random() * colorVar * 2 - colorVar), 0, 255)
+                };
+                
+                const variedSecondary = {
+                    r: clamp(secondaryColor.r + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    g: clamp(secondaryColor.g + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    b: clamp(secondaryColor.b + (Math.random() * colorVar * 2 - colorVar), 0, 255)
+                };
+                
+                const variedAccent = {
+                    r: clamp(accentColor.r + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    g: clamp(accentColor.g + (Math.random() * colorVar * 2 - colorVar), 0, 255),
+                    b: clamp(accentColor.b + (Math.random() * colorVar * 2 - colorVar), 0, 255)
+                };
+                
+                // Random pattern
+                const patterns = ['stars', 'alien', 'circuit', 'portal', 'random'];
+                const randomPattern = patterns[Math.floor(Math.random() * patterns.length)];
+                
+                // Create canvas
+                const batchCanvas = document.createElement('canvas');
+                batchCanvas.width = variedWidth;
+                batchCanvas.height = variedHeight;
+                const batchCtx = batchCanvas.getContext('2d');
+                
+                // Draw pattern
+                batchCtx.fillStyle = `rgb(${variedPrimary.r}, ${variedPrimary.g}, ${variedPrimary.b})`;
+                batchCtx.fillRect(0, 0, variedWidth, variedHeight);
+                
+                drawPatternOnCanvas(batchCtx, variedWidth, variedHeight, randomPattern, variedPrimary, variedSecondary, variedAccent);
+                
+                // Add to batch
+                addToBatch(batchCanvas);
+            }
+            
+            // Show first image
+            displayBatchImage(0);
+            showNotification(`Generated ${count} images!`);
+        }
+        
+        // Clamp a value between min and max
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, Math.round(value)));
+        }
+        
+        // Draw stars and nebulae pattern
+        function drawStars(context, w, h, primColor, secColor, accColor) {
+            // Draw nebula background
+            const gradient = context.createRadialGradient(
+                w * 0.3, h * 0.3, 0,
+                w * 0.3, h * 0.3, Math.max(w, h) * 0.7
+            );
+            gradient.addColorStop(0, `rgba(${secColor.r}, ${secColor.g}, ${secColor.b}, 0.8)`);
+            gradient.addColorStop(1, `rgba(${primColor.r}, ${primColor.g}, ${primColor.b}, 0.1)`);
+            
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, w, h);
+            
+            // Draw stars
+            const starCount = Math.max(10, Math.floor((w * h) / 800));
+            
+            for (let i = 0; i < starCount; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const radius = Math.random() * 2.5;
+                
+                context.beginPath();
+                context.arc(x, y, radius, 0, Math.PI * 2);
+                context.fillStyle = `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, ${Math.random() * 0.8 + 0.2})`;
+                context.fill();
+                
+                // Add glow for some stars
+                if (Math.random() > 0.7 && radius > 1) {
+                    context.beginPath();
+                    context.arc(x, y, radius * 3, 0, Math.PI * 2);
+                    const glowGradient = context.createRadialGradient(x, y, radius, x, y, radius * 3);
+                    glowGradient.addColorStop(0, `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 0.6)`);
+                    glowGradient.addColorStop(1, `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 0)`);
+                    context.fillStyle = glowGradient;
+                    context.fill();
+                }
+            }
+            
+            // Draw some larger "planets" if image is large enough
+            if (w > 50 && h > 50) {
+                const planetCount = Math.floor(Math.random() * 3) + 1;
+                for (let i = 0; i < planetCount; i++) {
+                    const planetX = Math.random() * w;
+                    const planetY = Math.random() * h;
+                    const planetRadius = Math.random() * Math.min(w, h) * 0.1 + 10;
+                    
+                    // Planet shadow
+                    context.beginPath();
+                    context.arc(planetX, planetY, planetRadius, 0, Math.PI * 2);
+                    const planetGradient = context.createRadialGradient(
+                        planetX - planetRadius * 0.3, planetY - planetRadius * 0.3, 0,
+                        planetX, planetY, planetRadius
+                    );
+                    planetGradient.addColorStop(0, `rgba(${secColor.r}, ${secColor.g}, ${secColor.b}, 0.9)`);
+                    planetGradient.addColorStop(1, `rgba(${primColor.r}, ${primColor.g}, ${primColor.b}, 0.3)`);
+                    context.fillStyle = planetGradient;
+                    context.fill();
+                }
+            }
+        }
+        
+        // Draw alien code pattern (simplified for brevity)
+        function drawAlienCode(context, w, h, primColor, secColor, accColor) {
+            // Draw background grid
+            const gridSize = Math.max(5, Math.min(20, w/20));
+            context.strokeStyle = `rgba(${secColor.r}, ${secColor.g}, ${secColor.b}, 0.2)`;
+            context.lineWidth = 1;
+            
+            for (let x = 0; x < w; x += gridSize) {
+                context.beginPath();
+                context.moveTo(x, 0);
+                context.lineTo(x, h);
+                context.stroke();
+            }
+            
+            for (let y = 0; y < h; y += gridSize) {
+                context.beginPath();
+                context.moveTo(0, y);
+                context.lineTo(w, y);
+                context.stroke();
+            }
+            
+            // Draw alien symbols if image is large enough
+            if (w > 30 && h > 30) {
+                const symbolCount = Math.max(5, Math.floor((w * h) / 500));
+                context.fillStyle = `rgb(${accColor.r}, ${accColor.g}, ${accColor.b})`;
+                context.font = 'bold ' + Math.max(8, Math.min(16, w/25)) + 'px monospace';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                
+                const symbols = ['Ψ', 'Ω', 'Δ', 'Θ', 'Ξ', 'Φ', 'λ', 'π', 'Σ', '∞', '♆', '♄'];
+                
+                for (let i = 0; i < symbolCount; i++) {
+                    const x = Math.floor(Math.random() * (w / gridSize)) * gridSize + gridSize/2;
+                    const y = Math.floor(Math.random() * (h / gridSize)) * gridSize + gridSize/2;
+                    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+                    
+                    context.fillText(symbol, x, y);
+                }
+            }
+        }
+        
+        // Draw circuit board pattern (simplified)
+        function drawCircuitBoard(context, w, h, primColor, secColor, accColor) {
+            // Draw base board
+            context.fillStyle = `rgb(${primColor.r}, ${primColor.g}, ${primColor.b})`;
+            context.fillRect(0, 0, w, h);
+            
+            // Draw circuit lines if image is large enough
+            if (w > 20 && h > 20) {
+                const lines = [];
+                const lineCount = Math.max(3, Math.floor(w/50));
+                
+                context.lineWidth = Math.max(1, w/200);
+                context.lineCap = 'round';
+                context.lineJoin = 'round';
+                
+                for (let i = 0; i < lineCount; i++) {
+                    const startX = Math.random() * w;
+                    const startY = Math.random() * h;
+                    const segments = Math.floor(Math.random() * 5) + 3;
+                    let currentX = startX;
+                    let currentY = startY;
+                    
+                    context.beginPath();
+                    context.moveTo(startX, startY);
+                    
+                    for (let j = 0; j < segments; j++) {
+                        const direction = Math.floor(Math.random() * 4);
+                        const segmentLength = Math.random() * Math.min(w, h) * 0.2 + 10;
+                        
+                        switch(direction) {
+                            case 0: currentX += segmentLength; break;
+                            case 1: currentY += segmentLength; break;
+                            case 2: currentX -= segmentLength; break;
+                            case 3: currentY -= segmentLength; break;
+                        }
+                        
+                        currentX = Math.max(5, Math.min(w - 5, currentX));
+                        currentY = Math.max(5, Math.min(h - 5, currentY));
+                        
+                        context.lineTo(currentX, currentY);
+                    }
+                    
+                    context.strokeStyle = `rgba(${secColor.r}, ${secColor.g}, ${secColor.b}, 0.8)`;
+                    context.stroke();
+                    lines.push({x: currentX, y: currentY});
+                }
+                
+                // Draw circuit components
+                if (lines.length > 0) {
+                    context.fillStyle = `rgb(${accColor.r}, ${accColor.g}, ${accColor.b})`;
+                    
+                    lines.forEach(point => {
+                        const componentType = Math.floor(Math.random() * 3);
+                        const size = Math.max(3, Math.min(w, h) / 30);
+                        
+                        switch(componentType) {
+                            case 0:
+                                context.beginPath();
+                                context.arc(point.x, point.y, size, 0, Math.PI * 2);
+                                context.fill();
+                                break;
+                            case 1:
+                                context.fillRect(point.x - size, point.y - size/1.5, size*2, size*1.5);
+                                break;
+                            case 2:
+                                context.beginPath();
+                                context.moveTo(point.x, point.y - size);
+                                context.lineTo(point.x + size, point.y + size*0.8);
+                                context.lineTo(point.x - size, point.y + size*0.8);
+                                context.closePath();
+                                context.fill();
+                                break;
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Draw space portal pattern (simplified)
+        function drawSpacePortal(context, w, h, primColor, secColor, accColor) {
+            // Draw portal in center
+            const centerX = w / 2;
+            const centerY = h / 2;
+            const portalRadius = Math.min(w, h) * 0.3;
+            
+            if (portalRadius > 5) {
+                // Create portal gradient
+                const portalGradient = context.createRadialGradient(
+                    centerX, centerY, portalRadius * 0.3,
+                    centerX, centerY, portalRadius
+                );
+                
+                portalGradient.addColorStop(0, `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 1)`);
+                portalGradient.addColorStop(0.5, `rgba(${secColor.r}, ${secColor.g}, ${secColor.b}, 0.8)`);
+                portalGradient.addColorStop(1, `rgba(${primColor.r}, ${primColor.g}, ${primColor.b}, 0)`);
+                
+                // Draw portal
+                context.beginPath();
+                context.arc(centerX, centerY, portalRadius, 0, Math.PI * 2);
+                context.fillStyle = portalGradient;
+                context.fill();
+                
+                // Add portal spiral effect if large enough
+                if (portalRadius > 15) {
+                    context.strokeStyle = `rgba(255, 255, 255, 0.7)`;
+                    context.lineWidth = Math.max(1, portalRadius/15);
+                    
+                    const spiralTurns = 3;
+                    const spiralPoints = 50;
+                    
+                    context.beginPath();
+                    for (let i = 0; i <= spiralPoints; i++) {
+                        const angle = (i / spiralPoints) * Math.PI * 2 * spiralTurns;
+                        const radius = portalRadius * (i / spiralPoints);
+                        const x = centerX + Math.cos(angle) * radius;
+                        const y = centerY + Math.sin(angle) * radius;
+                        
+                        if (i === 0) {
+                            context.moveTo(x, y);
+                        } else {
+                            context.lineTo(x, y);
+                        }
+                    }
+                    context.stroke();
+                }
+                
+                // Add glow effect around portal
+                context.beginPath();
+                context.arc(centerX, centerY, portalRadius * 1.5, 0, Math.PI * 2);
+                const glowGradient = context.createRadialGradient(
+                    centerX, centerY, portalRadius,
+                    centerX, centerY, portalRadius * 1.5
+                );
+                glowGradient.addColorStop(0, `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 0.3)`);
+                glowGradient.addColorStop(1, `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 0)`);
+                context.fillStyle = glowGradient;
+                context.fill();
+            }
+        }
+        
+        // Draw random chaos pattern (simplified)
+        function drawRandomChaos(context, w, h, primColor, secColor, accColor) {
+            // Draw random geometric shapes
+            const shapeCount = Math.max(5, Math.floor((w * h) / 1000));
+            
+            for (let i = 0; i < shapeCount; i++) {
+                const x = Math.random() * w;
+                const y = Math.random() * h;
+                const size = Math.random() * Math.min(w, h) * 0.2 + 5;
+                const shapeType = Math.floor(Math.random() * 4);
+                const color = Math.random() > 0.5 ? secColor : accColor;
+                const alpha = Math.random() * 0.7 + 0.3;
+                
+                context.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+                context.strokeStyle = `rgba(${accColor.r}, ${accColor.g}, ${accColor.b}, 0.8)`;
+                context.lineWidth = Math.max(1, size/20);
+                
+                switch(shapeType) {
+                    case 0:
+                        context.beginPath();
+                        context.arc(x, y, size/2, 0, Math.PI * 2);
+                        if (Math.random() > 0.5) context.fill();
+                        else context.stroke();
+                        break;
+                    case 1:
+                        if (Math.random() > 0.5) {
+                            context.fillRect(x - size/2, y - size/2, size, size);
+                        } else {
+                            context.strokeRect(x - size/2, y - size/2, size, size);
+                        }
+                        break;
+                    case 2:
+                        context.beginPath();
+                        context.moveTo(x, y - size/2);
+                        context.lineTo(x + size/2, y + size/2);
+                        context.lineTo(x - size/2, y + size/2);
+                        context.closePath();
+                        if (Math.random() > 0.5) context.fill();
+                        else context.stroke();
+                        break;
+                    case 3:
+                        context.beginPath();
+                        for (let j = 0; j < 5; j++) {
+                            const angle = (j / 5) * Math.PI * 2;
+                            const px = x + Math.cos(angle) * size/2;
+                            const py = y + Math.sin(angle) * size/2;
+                            if (j === 0) context.moveTo(px, py);
+                            else context.lineTo(px, py);
+                        }
+                        context.closePath();
+                        if (Math.random() > 0.5) context.fill();
+                        else context.stroke();
+                        break;
+                }
+            }
+        }
+        
+        // Download single BMP file
+        function downloadSingleBMP() {
+            // Ensure we have an image to download
+            if (batchImages.length === 0) {
+                // Generate current image if no batch exists
+                addToBatch(canvas);
+                showNotification("Generated image for download!");
+            }
+            
+            if (currentImageIndex >= 0 && batchImages[currentImageIndex]) {
+                const image = batchImages[currentImageIndex];
+                
+                // Create BMP from canvas
+                const bmpData = canvasToBMP(image.canvas);
+                
+                if (bmpData) {
+                    // Create download link
+                    const blob = new Blob([bmpData], {type: 'image/bmp'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `alien-${image.pattern}-${image.width}x${image.height}.bmp`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showNotification(`Downloading ${image.width}x${image.height} BMP!`);
+                } else {
+                    showNotification("Error creating BMP file!");
+                }
+            } else {
+                showNotification("No image available to download!");
+            }
+        }
+        
+        // Download all images as ZIP
+        async function downloadAsZip() {
+            if (batchImages.length === 0) {
+                showNotification('No images to download. Generate some images first.');
+                return;
+            }
+            
+            try {
+                showNotification(`Creating ZIP with ${batchImages.length} images...`);
+                
+                // Create ZIP file
+                const zip = new JSZip();
+                
+                // Add each image to ZIP
+                for (let i = 0; i < batchImages.length; i++) {
+                    const image = batchImages[i];
+                    const bmpData = canvasToBMP(image.canvas);
+                    
+                    if (bmpData) {
+                        const filename = `alien-image-${i+1}-${image.pattern}-${image.width}x${image.height}.bmp`;
+                        zip.file(filename, bmpData);
+                    }
+                }
+                
+                // Generate ZIP file
+                const content = await zip.generateAsync({type: 'blob'});
+                
+                // Download ZIP
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `alien-space-images-${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification(`ZIP download with ${batchImages.length} images started!`);
+            } catch (error) {
+                console.error('Error creating ZIP:', error);
+                showNotification('Error creating ZIP file!');
+            }
+        }
+        
+        // Convert canvas to BMP data
+        function canvasToBMP(sourceCanvas) {
+            try {
+                const width = sourceCanvas.width;
+                const height = sourceCanvas.height;
+                
+                // Create a temporary canvas to ensure we have the right pixel data
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Copy the image to temporary canvas
+                tempCtx.drawImage(sourceCanvas, 0, 0);
+                
+                // Get image data
+                const imageData = tempCtx.getImageData(0, 0, width, height);
+                const pixelData = imageData.data;
+                
+                // BMP file header (14 bytes)
+                const fileHeaderSize = 14;
+                const infoHeaderSize = 40;
+                const pixelDataOffset = fileHeaderSize + infoHeaderSize;
+                
+                // Calculate row size (each row must be multiple of 4 bytes)
+                const rowSize = Math.floor((width * 3 + 3) / 4) * 4; // 3 bytes per pixel (BGR), padded
+                const pixelDataSize = rowSize * height;
+                const fileSize = pixelDataOffset + pixelDataSize;
+                
+                // Create array buffer for BMP
+                const buffer = new ArrayBuffer(fileSize);
+                const view = new DataView(buffer);
+                
+                // File header
+                view.setUint8(0, 0x42); // 'B'
+                view.setUint8(1, 0x4D); // 'M'
+                view.setUint32(2, fileSize, true);
+                view.setUint32(6, 0, true);
+                view.setUint32(10, pixelDataOffset, true);
+                
+                // Info header (DIB header)
+                view.setUint32(14, infoHeaderSize, true);
+                view.setInt32(18, width, true);
+                view.setInt32(22, height, true);
+                view.setUint16(26, 1, true);
+                view.setUint16(28, 24, true); // 24 bits per pixel
+                view.setUint32(30, 0, true); // No compression
+                view.setUint32(34, pixelDataSize, true);
+                view.setInt32(38, 2835, true); // 72 DPI
+                view.setInt32(42, 2835, true); // 72 DPI
+                view.setUint32(46, 0, true);
+                view.setUint32(50, 0, true);
+                
+                // Pixel data (BGR format, bottom row first)
+                let offset = pixelDataOffset;
+                
+                // Process from bottom to top (BMP stores pixels bottom-up)
+                for (let y = height - 1; y >= 0; y--) {
+                    for (let x = 0; x < width; x++) {
+                        const srcIndex = (y * width + x) * 4;
+                        
+                        // BMP stores as BGR (not RGB)
+                        view.setUint8(offset, pixelData[srcIndex + 2]);     // Blue
+                        view.setUint8(offset + 1, pixelData[srcIndex + 1]); // Green
+                        view.setUint8(offset + 2, pixelData[srcIndex]);     // Red
+                        
+                        offset += 3;
+                    }
+                    
+                    // Row padding to make row size multiple of 4 bytes
+                    const padding = rowSize - (width * 3);
+                    for (let p = 0; p < padding; p++) {
+                        view.setUint8(offset, 0);
+                        offset++;
+                    }
+                }
+                
+                return buffer;
+            } catch (error) {
+                console.error('Error creating BMP:', error);
+                return null;
+            }
+        }
+    </script>
+</body>
+</html>
