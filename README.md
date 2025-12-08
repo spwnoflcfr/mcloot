@@ -9,3 +9,16 @@ my first trial will be to use FREE apps on mobile to load cards with code that a
 we may need to create our own wallet as well... if so that will be included in this repository.
 
 wish me and my homies luck.
+
+
+Step 1: imaging for 540 byte cards
+
+Step 2: writing image on card via apk or web app
+
+Step 3: download apk or web app for claiming image and possible web3 wallet
+
+Step 4: private launch
+
+Step 5: aquire/distribute prizes to bulk created wallets (evm and svm???(solana))
+
+Step 6: public launch and fullfillment 
