@@ -22,3 +22,5 @@ Step 4: private launch
 Step 5: aquire/distribute prizes to bulk created wallets (evm and svm???(solana))
 
 Step 6: public launch and fullfillment 
+
+https://store.fun/mclt
